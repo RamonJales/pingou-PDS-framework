@@ -1,5 +1,6 @@
 package com.pds.pingou.pacote;
 
+import com.pds.pingou.framework.core.entity.BasePackage;
 import com.pds.pingou.planos.Plano;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -17,39 +18,21 @@ import java.util.List;
  * e contém uma lista de itens (produtos) que serão enviados na data programada.
  * É fundamental para a logística de entregas mensais do sistema de assinatura.
  * 
+ * Agora estende BasePackage do framework, reutilizando funcionalidades comuns.
+ * 
  * @author Pingou Team
- * @version 1.0
+ * @version 2.0
  * @since 1.0
  */
 @Entity
 @Table(name = "pacotes")
 @Getter
 @Setter
-public class Pacote {
+public class Pacote extends BasePackage<Plano, ItemPacote> {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
-    /** Nome identificador do pacote */
-    @Column(nullable = false)
-    private String nome;
-    
-    /** Descrição detalhada do pacote */
-    @Column(length = 1000)
-    private String descricao;
-    
-    /** Data programada para entrega do pacote */
-    @Column(name = "data_entrega", nullable = false)
-    private LocalDate dataEntrega;
-    
-    /** Mês de referência do pacote (1-12) */
+    /** Mês de referência do pacote (1-12) - Compatibilidade */
     @Column(nullable = false)
     private Integer mes;
-    
-    /** Ano de referência do pacote */
-    @Column(nullable = false)
-    private Integer ano;
     
     /** Plano ao qual este pacote pertence */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -59,10 +42,6 @@ public class Pacote {
     /** Lista de produtos incluídos neste pacote */
     @OneToMany(mappedBy = "pacote", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ItemPacote> itens = new ArrayList<>();
-    
-    /** Indica se o pacote está ativo no sistema */
-    @Column(nullable = false)
-    private Boolean ativo = true;
     
     public Pacote() {}
     
@@ -78,12 +57,45 @@ public class Pacote {
      */
     public Pacote(String nome, String descricao, LocalDate dataEntrega, 
                   Integer mes, Integer ano, Plano plano) {
-        this.nome = nome;
-        this.descricao = descricao;
-        this.dataEntrega = dataEntrega;
-        this.mes = mes;
-        this.ano = ano;
+        this.setNome(nome);
+        this.setDescricao(descricao);
+        this.setDataEntrega(dataEntrega);
+        this.setPeriodo(mes); // mes agora é mapeado para periodo da classe base
+        this.mes = mes; // manter compatibilidade
+        this.setAno(ano);
         this.plano = plano;
+    }
+    
+    /**
+     * Implementação do método abstrato do framework.
+     */
+    @Override
+    public Plano getPlan() {
+        return plano;
+    }
+    
+    /**
+     * Implementação do método abstrato do framework.
+     */
+    @Override
+    public void setPlan(Plano plan) {
+        this.plano = plan;
+    }
+    
+    /**
+     * Implementação do método abstrato do framework.
+     */
+    @Override
+    public List<ItemPacote> getItems() {
+        return itens;
+    }
+    
+    /**
+     * Implementação do método abstrato do framework.
+     */
+    @Override
+    public void setItems(List<ItemPacote> items) {
+        this.itens = items;
     }
     
     /**
@@ -92,7 +104,7 @@ public class Pacote {
      * @param item Item a ser adicionado ao pacote
      */
     public void adicionarItem(ItemPacote item) {
-        itens.add(item);
+        addItem(item);
         item.setPacote(this);
     }
     
@@ -102,7 +114,7 @@ public class Pacote {
      * @param item Item a ser removido do pacote
      */
     public void removerItem(ItemPacote item) {
-        itens.remove(item);
+        removeItem(item);
         item.setPacote(null);
     }
 }

@@ -1,10 +1,9 @@
 package com.pds.pingou.produto;
 
+import com.pds.pingou.framework.core.entity.BaseProduct;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.math.BigDecimal;
 
 /**
  * Classe abstrata que representa um produto genérico no sistema Pingou.
@@ -14,8 +13,10 @@ import java.math.BigDecimal;
  * Utiliza o padrão de herança JPA com estratégia JOINED para permitir
  * especialização de produtos mantendo a integridade relacional.
  * 
+ * Agora estende BaseProduct do framework, reutilizando funcionalidades comuns.
+ * 
  * @author Pingou Team
- * @version 1.0
+ * @version 2.0
  * @since 1.0
  */
 @Entity
@@ -23,31 +24,7 @@ import java.math.BigDecimal;
 @Table(name = "produtos")
 @Getter
 @Setter
-public abstract class Produto {
-    
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
-    /** Nome comercial do produto */
-    @Column(nullable = false)
-    private String nome;
-    
-    /** Descrição detalhada do produto */
-    @Column(length = 1000)
-    private String descricao;
-    
-    /** Preço do produto em reais */
-    @Column(nullable = false)
-    private BigDecimal preco;
-    
-    /** URL da imagem do produto */
-    @Column(name = "url_imagem")
-    private String urlImagem;
-    
-    /** Indica se o produto está ativo no sistema */
-    @Column(nullable = false)
-    private Boolean ativo = true;
+public abstract class Produto extends BaseProduct {
     
     public Produto() {}
     

@@ -1,5 +1,6 @@
 package com.pds.pingou.planos;
 
+import com.pds.pingou.framework.core.entity.BasePlan;
 import com.pds.pingou.pacote.Pacote;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -17,42 +18,17 @@ import java.util.List;
  * de produtos por mês e frequência de entrega. Os planos são associados a
  * pacotes mensais que definem exatamente quais produtos serão enviados.
  * 
+ * Agora estende BasePlan do framework, reutilizando funcionalidades comuns.
+ * 
  * @author Pingou Team
- * @version 2.0
+ * @version 3.0
  * @since 1.0
  */
 @Setter
 @Getter
 @Entity
 @Table(name = "planos")
-public class Plano {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    /** Nome comercial do plano */
-    @Column(nullable = false, unique = true)
-    private String nome;
-
-    /** Descrição detalhada do plano e seus benefícios */
-    @Column(nullable = false, length = 2000)
-    private String descricao;
-
-    /** Preço mensal do plano em reais */
-    @Column(nullable = false)
-    private BigDecimal preco;
-    
-    /** Quantidade máxima de produtos que podem ser enviados por mês */
-    @Column(name = "max_produtos_por_mes", nullable = false)
-    private Integer maxProdutosPorMes;
-    
-    /** Frequência das entregas (MENSAL, BIMESTRAL, etc.) */
-    @Column(name = "frequencia_entrega", nullable = false)
-    private String frequenciaEntrega = "MENSAL";
-    
-    /** Indica se o plano está ativo e disponível para assinatura */
-    @Column(nullable = false)
-    private Boolean ativo = true;
+public class Plano extends BasePlan<Pacote> {
     
     /** Lista de pacotes mensais associados a este plano */
     @OneToMany(mappedBy = "plano", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -70,10 +46,26 @@ public class Plano {
      * @param maxProdutosPorMes Quantidade máxima de produtos por mês
      */
     public Plano(String nome, String descricao, BigDecimal preco, Integer maxProdutosPorMes) {
-        this.nome = nome;
-        this.descricao = descricao;
-        this.preco = preco;
-        this.maxProdutosPorMes = maxProdutosPorMes;
+        this.setNome(nome);
+        this.setDescricao(descricao);
+        this.setPreco(preco);
+        this.setMaxProdutosPorPeriodo(maxProdutosPorMes);
+    }
+    
+    /**
+     * Implementação do método abstrato do framework.
+     */
+    @Override
+    public List<Pacote> getPackages() {
+        return pacotes;
+    }
+    
+    /**
+     * Implementação do método abstrato do framework.
+     */
+    @Override
+    public void setPackages(List<Pacote> packages) {
+        this.pacotes = packages;
     }
     
     /**
@@ -82,7 +74,7 @@ public class Plano {
      * @param pacote Pacote a ser adicionado
      */
     public void adicionarPacote(Pacote pacote) {
-        pacotes.add(pacote);
+        addPackage(pacote);
         pacote.setPlano(this);
     }
     
@@ -92,7 +84,16 @@ public class Plano {
      * @param pacote Pacote a ser removido
      */
     public void removerPacote(Pacote pacote) {
-        pacotes.remove(pacote);
+        removePackage(pacote);
         pacote.setPlano(null);
+    }
+    
+    // Compatibilidade com código legado
+    public Integer getMaxProdutosPorMes() {
+        return getMaxProdutosPorPeriodo();
+    }
+    
+    public void setMaxProdutosPorMes(Integer max) {
+        setMaxProdutosPorPeriodo(max);
     }
 }
