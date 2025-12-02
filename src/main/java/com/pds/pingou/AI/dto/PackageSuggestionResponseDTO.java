@@ -1,6 +1,6 @@
 package com.pds.pingou.AI.dto;
 
-import com.pds.pingou.pacote.ItemPacoteRequestDTO;
+import com.pds.pingou.camisa.pacote.dto.ItemPacoteCamisaRequestDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.List;
 public class PackageSuggestionResponseDTO {
     private Long planoId;
     private Integer tamanho;
-    private List<ItemPacoteRequestDTO> itens;
+    private List<ItemPacoteCamisaRequestDTO> itens;
 }
 
 

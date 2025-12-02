@@ -1,376 +1,211 @@
-# Pingou - Sistema de Assinatura de Cachaça Artesanal
+# 🎽 Camisa Club - Sistema de Assinatura de Camisas de Futebol
 
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.5-brightgreen)
-![Java](https://img.shields.io/badge/Java-21-orange)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
-![JWT](https://img.shields.io/badge/JWT-Security-red)
+Sistema completo de assinatura de camisas de futebol desenvolvido com o **Framework PDS** para gerenciamento genérico de assinaturas.
 
-## Sobre o Projeto
+## 📋 Sobre o Projeto
 
-O **Pingou** é uma plataforma de assinatura de cachaça artesanal brasileira que conecta apreciadores da bebida a experiências únicas de degustação. O sistema oferece diferentes planos de assinatura com entregas mensais de cachaças selecionadas de pequenos alambiques do Brasil.
+O **Camisa Club** é uma aplicação completa que permite aos usuários assinar planos para receber camisas de futebol mensalmente. O sistema oferece diferentes categorias de planos:
 
-### Funcionalidades Principais
+- **Clássicos Brasileiros**: Camisas dos principais times do Brasil
+- **Internacionais Premium**: Camisas das maiores ligas europeias
+- **Retrô Nostálgico**: Camisas históricas e colecionáveis
+- **Nacionais Completo**: Plano premium com múltiplas camisas brasileiras
+- **Libertadores Especial**: Camisas de times da Copa Libertadores
+- **Champions Collection**: Exclusivo com camisas da Champions League
 
-- 🔐 **Autenticação e Autorização** com JWT
-- 👤 **Gestão de Usuários** com roles (USER/ADMIN)  
-- 📋 **Planos de Assinatura** com diferentes características
-- 🎯 **Sistema de Assinaturas** 1:1 usuário-assinatura
-- 🍺 **Catálogo de Cachaças** com herança JPA
-- 📦 **Pacotes Mensais** organizados por plano
-- 🔗 **Items de Pacote** ligando produtos aos pacotes
-- 🛡️ **Tratamento de Exceções** específico por módulo
-- 📚 **Documentação Swagger** integrada
+## 🏗️ Arquitetura
 
-## Diagrama UML do Sistema
+O projeto utiliza o **Framework PDS**, um framework genérico e reutilizável para sistemas de assinatura, estendendo as seguintes classes base:
 
-### Relacionamentos Entre Entidades
+### Classes do Framework Core
+- `BaseProduct` → Produto genérico
+- `BasePlan` → Plano de assinatura
+- `BasePackage` → Pacote de produtos
+- `BasePackageItem` → Item de pacote
+- `BaseSubscription` → Assinatura
+- `BaseProductService` → Serviço de produtos
+- `BasePlanService` → Serviço de planos
+- `BaseRestController` → Controller REST
 
-```mermaid
-erDiagram
-    USER {
-        bigint id PK
-        varchar email UK
-        varchar nome
-        varchar sobrenome
-        varchar password
-        varchar role
-    }
-    
-    ASSINATURA {
-        bigint id PK
-        bigint user_id FK,UK
-        bigint plano_id FK
-        varchar status
-        date data_inicio
-        date data_expiracao
-    }
-    
-    PLANO {
-        bigint id PK
-        varchar nome UK
-        text descricao
-        decimal preco
-        integer max_produtos_por_mes
-        varchar frequencia_entrega
-        boolean ativo
-    }
-    
-    PACOTE {
-        bigint id PK
-        bigint plano_id FK
-        varchar nome
-        text descricao
-        date data_entrega
-        integer mes
-        integer ano
-        boolean ativo
-    }
-    
-    ITEM_PACOTE {
-        bigint id PK
-        bigint pacote_id FK
-        bigint produto_id FK
-        integer quantidade
-        text observacoes
-    }
-    
-    PRODUTO {
-        bigint id PK
-        varchar nome
-        text descricao
-        decimal preco
-        varchar url_imagem
-        boolean ativo
-    }
-    
-    CACHACA {
-        bigint id PK,FK
-        varchar regiao
-        decimal teor_alcoolico
-        integer volume
-        varchar tipo_cachaca
-        varchar tipo_envelhecimento
-        integer tempo_envelhecimento_meses
-        integer ano_producao
-    }
+### Implementação para Camisas
+- `Camisa` extends `BaseProduct`
+- `PlanoCamisa` extends `BasePlan`
+- `PacoteCamisa` extends `BasePackage`
+- `ItemPacoteCamisa` extends `BasePackageItem`
+- `AssinaturaCamisa` extends `BaseSubscription`
 
-    %% Relacionamentos
-    USER ||--o| ASSINATURA : "possui uma"
-    ASSINATURA }o--|| PLANO : "vinculada a"
-    PLANO ||--o{ PACOTE : "contém vários"
-    PACOTE ||--o{ ITEM_PACOTE : "possui itens"
-    ITEM_PACOTE }o--|| PRODUTO : "referencia"
-    PRODUTO ||--o| CACHACA : "especialização"
-```
+## 🚀 Tecnologias Utilizadas
 
-### Arquitetura em Camadas
+- **Java 21**
+- **Spring Boot 3.5.5**
+- **Spring Data JPA**
+- **PostgreSQL**
+- **Lombok**
+- **Spring Security**
+- **JWT Authentication**
+- **Swagger/OpenAPI**
+- **Docker & Docker Compose**
 
-```mermaid
-graph TB
-    subgraph "Camada de Apresentação"
-        AC[AuthenticationController]
-        PC[PlanoController]
-        ASC[AssinaturaController]
-        CC[CachacaController]
-        PAC[PacoteController]
-    end
-    
-    subgraph "Camada de Negócio"
-        AS[AuthenticationService]
-        PS[PlanoService]
-        ASS[AssinaturaService]
-        CS[CachacaService]
-        PAS[PacoteService]
-    end
-    
-    subgraph "Camada de Persistência"
-        UR[UserRepository]
-        PR[PlanoRepository]
-        AR[AssinaturaRepository]
-        CR[CachacaRepository]
-        PAR[PacoteRepository]
-        IPR[ItemPacoteRepository]
-    end
-    
-    subgraph "Banco de Dados"
-        DB[(PostgreSQL)]
-    end
-    
-    %% Fluxo de dados
-    AC --> AS
-    PC --> PS
-    ASC --> ASS
-    CC --> CS
-    PAC --> PAS
-    
-    AS --> UR
-    PS --> PR
-    ASS --> AR
-    ASS --> UR
-    ASS --> PR
-    CS --> CR
-    PAS --> PAR
-    PAS --> PR
-    PAS --> IPR
-    
-    UR --> DB
-    PR --> DB
-    AR --> DB
-    CR --> DB
-    PAR --> DB
-    IPR --> DB
-```
-
-### Diagrama Detalhado de Classes
-
-Para visualizar o diagrama completo de classes com todos os relacionamentos, métodos e atributos, consulte o arquivo [`uml-diagram.md`](./uml-diagram.md).
-
-## Tecnologias Utilizadas
-
-- **Backend Framework**: Spring Boot 3.5.5
-- **Linguagem**: Java 21
-- **Banco de Dados**: PostgreSQL 15
-- **ORM**: Hibernate/JPA
-- **Segurança**: Spring Security + JWT
-- **Documentação**: SpringDoc OpenAPI (Swagger)
-- **Build Tool**: Maven
-- **Containerização**: Docker Compose
-
-## Estrutura do Projeto
+## 📦 Estrutura do Projeto
 
 ```
 src/main/java/com/pds/pingou/
-├── AI/                          # Módulo de IA (Gemini)
-├── admin/                       # Gestão administrativa
+├── framework/core/          # Framework genérico reutilizável
+│   ├── entity/              # Entidades base abstratas
+│   ├── service/             # Serviços base abstratos
+│   ├── controller/          # Controllers base abstratos
+│   └── enums/               # Enumerações do framework
+├── camisa/                  # Implementação de camisas
+│   ├── Camisa.java
+│   ├── CamisaRepository.java
+│   ├── CamisaService.java
 │   ├── controller/
-│   └── service/
-├── assinatura/                  # Sistema de assinaturas
+│   ├── dto/
+│   ├── enums/
 │   ├── exception/
-│   └── handler/
-├── enums/                       # Enumerações do sistema
-├── pacote/                      # Pacotes mensais
-│   ├── exception/
-│   └── handler/
-├── planos/                      # Planos de assinatura
-│   ├── exception/
-│   └── handler/
-├── produto/                     # Hierarquia de produtos
-│   └── cachaca/                 # Especialização cachaça
-│       ├── exception/
-│       └── handler/
-└── security/                    # Segurança e autenticação
-    ├── auth/
-    │   └── dto/
-    ├── config/
-    ├── exception/
-    ├── handler/
-    └── user/
+│   ├── planos/              # Planos de assinatura
+│   ├── pacote/              # Pacotes mensais
+│   └── assinatura/          # Assinaturas
+├── security/                # Configuração de segurança
+│   ├── auth/
+│   ├── config/
+│   └── user/
+└── admin/                   # Gerenciamento de usuários
 ```
 
-## Principais Entidades e Relacionamentos
-
-### 1. **User ↔ Assinatura** (1:1)
-- Cada usuário pode ter **apenas uma assinatura ativa**
-- Relacionamento bidirecional com cascade
-
-### 2. **Assinatura ↔ Plano** (N:1)
-- Uma assinatura está vinculada a um plano específico
-- Múltiplas assinaturas podem usar o mesmo plano
-
-### 3. **Plano ↔ Pacote** (1:N)
-- Cada plano possui **múltiplos pacotes mensais**
-- Pacotes organizam entregas por mês/ano
-
-### 4. **Pacote ↔ ItemPacote** (1:N)
-- Cada pacote contém **vários itens** (produtos)
-- Relacionamento com quantidade e observações
-
-### 5. **ItemPacote ↔ Produto** (N:1)
-- Entidade de ligação entre pacotes e produtos
-- Permite mesmo produto em múltiplos pacotes
-
-### 6. **Produto ↔ Cachaça** (Herança)
-- **Produto**: classe abstrata base
-- **Cachaça**: especialização com atributos específicos
-- Estratégia de herança: `JOINED`
-
-## APIs Principais
-
-### Autenticação
-- `POST /api/v1/auth/register` - Cadastro de usuário
-- `POST /api/v1/auth/login` - Login
-- `POST /api/v1/auth/refresh-token` - Renovar token
-
-### Planos
-- `GET /api/v1/planos` - Listar planos
-- `POST /api/v1/planos` - Criar plano
-- `PUT /api/v1/planos/{id}` - Atualizar plano
-
-### Assinaturas
-- `POST /api/v1/assinaturas/ativar` - Ativar assinatura
-- `POST /api/v1/assinaturas/desativar/{userId}` - Desativar assinatura
-
-### Cachaças
-- `GET /api/v1/cachaças` - Listar cachaças ativas
-- `GET /api/v1/cachaças/regiao/{regiao}` - Buscar por região
-- `GET /api/v1/cachaças/tipo/{tipo}` - Buscar por tipo
-
-### Pacotes
-- `GET /api/v1/pacotes/plano/{planoId}` - Pacotes de um plano
-- `POST /api/v1/pacotes/{id}/itens` - Adicionar item ao pacote
-
-## Configuração e Execução
+## 🔧 Configuração e Instalação
 
 ### Pré-requisitos
 - Java 21+
 - Docker e Docker Compose
-- Maven 3.8+
+- Maven
 
-### Executando com Docker
-
-1. **Clone o repositório**:
+### 1. Clone o repositório
 ```bash
 git clone <repository-url>
-cd pingou-PDS
+cd pingou-PDS-framework
 ```
 
-2. **Suba o banco PostgreSQL**:
+### 2. Inicie o banco de dados PostgreSQL
 ```bash
-docker-compose up -d postgres
+docker-compose up -d
 ```
 
-3. **Execute a aplicação**:
+### 3. Configure as variáveis de ambiente (opcional)
 ```bash
-./mvnw spring-boot:run
+export JWT_SECRET=sua-chave-secreta
+export GOOGLE_AI_API_KEY=sua-api-key
 ```
 
-### Configurações do Banco
-- **Host**: localhost:5432
-- **Database**: pingou  
-- **User**: admin
-- **Password**: admin
+### 4. Execute a aplicação
+```bash
+mvn spring-boot:run
+```
 
-### Acessando a Documentação
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **OpenAPI JSON**: http://localhost:8080/v3/api-docs
+A aplicação estará disponível em: `http://localhost:8080`
 
-## Carga de dados (dump) para testes
+## 📚 API Endpoints
 
-- Dump completo (schema + dados): src/main/resources/data/pingou-dump.sql
-- Aviso: o script faz DROP TABLE antes de recriar; use apenas em ambiente de desenvolvimento.
+### Camisas
+- `GET /api/camisas` - Lista todas as camisas
+- `GET /api/camisas/{id}` - Busca camisa por ID
+- `POST /api/camisas` - Cria nova camisa
+- `PUT /api/camisas/{id}` - Atualiza camisa
+- `DELETE /api/camisas/{id}` - Remove camisa
+- `GET /api/camisas/time/{time}` - Busca por time
+- `GET /api/camisas/liga/{liga}` - Busca por liga
+- `GET /api/camisas/tipo/{tipo}` - Busca por tipo
+- `GET /api/camisas/search?termo={termo}` - Busca por termo
+- `GET /api/camisas/estoque` - Camisas em estoque
+- `GET /api/camisas/edicoes-limitadas` - Edições limitadas
 
-Como importar automaticamente
-- Windows (PowerShell): executar scripts/import-db.ps1
-- macOS/Linux (Bash): executar scripts/import-db.sh
+### Planos
+- `GET /api/planos` - Lista todos os planos
+- `GET /api/planos/{id}` - Busca plano por ID
+- `POST /api/planos` - Cria novo plano
+- `PUT /api/planos/{id}` - Atualiza plano
+- `DELETE /api/planos/{id}` - Remove plano
+- `GET /api/planos/ativos` - Lista planos ativos
+- `GET /api/planos/categoria/{categoria}` - Busca por categoria
+- `PATCH /api/planos/{id}/ativar` - Ativa plano
+- `PATCH /api/planos/{id}/desativar` - Desativa plano
 
-Alternativa manual (Docker)
-- Suba o Postgres: docker-compose up -d postgres
-- Copie o dump para o container: docker cp src/main/resources/data/pingou-dump.sql postgres:/tmp/pingou-dump.sql
-- Importe no banco: docker exec -i postgres psql -U admin -d pingou -v ON_ERROR_STOP=1 -f /tmp/pingou-dump.sql
+### Assinaturas
+- `GET /api/assinaturas` - Lista todas as assinaturas
+- `GET /api/assinaturas/{id}` - Busca assinatura por ID
+- `POST /api/assinaturas` - Cria nova assinatura
+- `PUT /api/assinaturas/{id}` - Atualiza assinatura
+- `DELETE /api/assinaturas/{id}` - Remove assinatura
+- `GET /api/assinaturas/usuario/{userId}` - Busca por usuário
+- `GET /api/assinaturas/ativas` - Lista assinaturas ativas
+- `PATCH /api/assinaturas/{id}/ativar` - Ativa assinatura
+- `PATCH /api/assinaturas/{id}/desativar` - Desativa assinatura
+- `PATCH /api/assinaturas/{id}/suspender` - Suspende assinatura
+- `PATCH /api/assinaturas/{id}/cancelar` - Cancela assinatura
 
-Após importar
-- Rode a aplicação e use as rotas de autenticação para obter tokens.
-- Para testar rotas ADMIN, altere a role de um usuário para ADMIN diretamente no banco se necessário.
+### Autenticação
+- `POST /api/auth/login` - Login
+- `POST /api/auth/register` - Registro
+- `POST /api/auth/refresh` - Renovar token
 
-## Padrões Arquiteturais Utilizados
+## 🗄️ Banco de Dados
 
-### 1. **Repository Pattern**
-- Abstração da camada de dados
-- Interfaces JPA específicas por entidade
+O banco de dados é inicializado automaticamente com dados de exemplo incluindo:
 
-### 2. **DTO Pattern**
-- **Request DTOs**: dados de entrada
-- **Response DTOs**: dados de saída
-- **Mappers**: conversão entre entidades e DTOs
+- **20 Camisas**: Brasileiras, Internacionais e Retrô
+- **6 Planos**: Diferentes categorias e preços
+- Times incluídos: Flamengo, Palmeiras, Real Madrid, Barcelona, Manchester United, Liverpool e muitos outros
 
-### 3. **Exception Handler Pattern**
-- **Global handlers**: tratamento centralizado
-- **Exceções específicas**: por módulo de negócio
-- **HTTP status codes**: apropriados para cada erro
+Para popular o banco com dados iniciais:
+```bash
+psql -U admin -d pingou -f src/main/resources/data/camisas-data.sql
+```
 
-### 4. **Strategy Pattern (Herança JPA)**
-- **JOINED strategy**: tabelas separadas para especialização
-- **Produto** como classe base abstrata
-- **Cachaça** como especialização concreta
+## 🔐 Segurança
 
-### 5. **Builder Pattern (Lombok)**
-- Geração automática de getters/setters
-- Construtores customizados
-- Redução de boilerplate code
+O sistema utiliza Spring Security com JWT para autenticação e autorização:
 
-## Funcionalidades de Destaque
+- Tokens JWT com expiração configurável
+- Refresh tokens para renovação
+- Endpoints públicos e protegidos
+- Roles de usuário (ADMIN, USER)
 
-### 🔒 Segurança Robusta
-- **JWT authentication** com refresh tokens
-- **Role-based authorization** (USER/ADMIN)
-- **Password encoding** com BCrypt
+## 📖 Documentação da API
 
-### 📦 Sistema de Pacotes Flexível  
-- **Pacotes mensais** organizados por plano
-- **Items configuráveis** com quantidade e observações
-- **Relacionamentos bidirecionais** para navegação eficiente
+Acesse a documentação interativa da API via Swagger UI:
+```
+http://localhost:8080/swagger-ui.html
+```
 
-### 🎯 Assinaturas Controladas
-- **Uma assinatura por usuário** (constraint de negócio)
-- **Status de assinatura** com enum específico
-- **Ativação/desativação** com controle de datas
+## 🎯 Funcionalidades Principais
 
-### 🍺 Catálogo Especializado
-- **Herança JPA** para hierarquia de produtos
-- **Enums específicos** para características da cachaça
-- **Busca avançada** por região e tipo
+- ✅ CRUD completo de camisas de futebol
+- ✅ Gestão de planos de assinatura com múltiplas categorias
+- ✅ Sistema de assinaturas com ciclo de vida completo
+- ✅ Autenticação e autorização com JWT
+- ✅ Busca avançada de camisas (time, liga, tipo, ano)
+- ✅ Controle de estoque
+- ✅ Edições limitadas e personalizações
+- ✅ API REST documentada com Swagger
+- ✅ Validações de negócio integradas
+- ✅ Tratamento de exceções centralizado
 
-### 📊 Queries Otimizadas
-- **Lazy loading** para performance
-- **Custom queries** com @Query
-- **Índices** em campos críticos (email único)
+## 🧪 Testes
 
-## Equipe de Desenvolvimento
+Execute os testes com:
+```bash
+mvn test
+```
 
-- **Backend**: Spring Boot + PostgreSQL
-- **Documentação**: Javadoc + Swagger
-- **Arquitetura**: Clean Architecture + DDD
+## 📝 Licença
+
+Este projeto foi desenvolvido como exemplo de uso do Framework PDS.
+
+## 👥 Autores
+
+Desenvolvido usando o **Framework PDS** - Sistema genérico para assinaturas.
 
 ---
 
-*Projeto desenvolvido como parte da disciplina de Padrões de Desenvolvimento de Software (PDS)*
+**Versão**: 1.0.0  
+**Última Atualização**: Dezembro 2025

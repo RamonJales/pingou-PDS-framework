@@ -18,28 +18,50 @@ public class AIService {
     private static final String DEFAULT_MODEL = "gemini-2.0-flash-exp";
     
     private final AIPromptProviderFactory promptProviderFactory;
-    private final Client aiClient;
+    private Client aiClient;
     private final String apiKey;
+    private boolean aiEnabled;
     
     @Value("${ai.model:gemini-2.0-flash-exp}")
     private String modelName;
     
     public AIService(AIPromptProviderFactory promptProviderFactory,
-                     @Value("${google.ai.api.key}") String apiKey) {
+                     @Value("${google.ai.api.key:}") String apiKey) {
         this.promptProviderFactory = promptProviderFactory;
         this.apiKey = apiKey;
         
-        // Configurar a API key como variável de ambiente para a biblioteca
-        System.setProperty("GOOGLE_API_KEY", apiKey);
-        
-        // Inicializar o Client sem parâmetros
-        this.aiClient = new Client();
-        
-        logger.info("AIService inicializado com sucesso usando o modelo: {}", DEFAULT_MODEL);
-        logger.info("API Key configurada (primeiros 10 caracteres): {}...", apiKey.substring(0, 10));
+        // Verificar se a API key está configurada
+        if (apiKey == null || apiKey.trim().isEmpty() || apiKey.startsWith("${")) {
+            this.aiEnabled = false;
+            this.aiClient = null;
+            logger.warn("AIService inicializado em MODO DESABILITADO - API key do Google AI não configurada");
+            logger.warn("Para habilitar a IA, configure a propriedade 'google.ai.api.key' no application.properties");
+        } else {
+            try {
+                // Configurar a API key como variável de ambiente para a biblioteca
+                System.setProperty("GOOGLE_API_KEY", apiKey);
+                
+                // Inicializar o Client sem parâmetros
+                this.aiClient = new Client();
+                this.aiEnabled = true;
+                
+                logger.info("AIService inicializado com sucesso usando o modelo: {}", DEFAULT_MODEL);
+                logger.info("API Key configurada (primeiros 10 caracteres): {}...", apiKey.substring(0, Math.min(10, apiKey.length())));
+            } catch (Exception e) {
+                this.aiEnabled = false;
+                this.aiClient = null;
+                logger.error("Erro ao inicializar AIService: {}. Modo IA desabilitado.", e.getMessage());
+            }
+        }
     }
 
     public AIResponseDTO processQuestion(AIQuestionDTO questionDTO) {
+        // Verificar se a IA está habilitada
+        if (!aiEnabled || aiClient == null) {
+            logger.warn("Tentativa de usar IA quando está desabilitada");
+            return AIResponseDTO.error("Serviço de IA não está disponível. Por favor, configure a API key do Google AI.");
+        }
+        
         try {
             // Validação da entrada
             if (questionDTO.getQuestion() == null || questionDTO.getQuestion().trim().isEmpty()) {

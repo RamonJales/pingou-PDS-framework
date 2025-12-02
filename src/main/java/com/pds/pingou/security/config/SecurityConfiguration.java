@@ -37,12 +37,25 @@ public class SecurityConfiguration {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // Autenticação
                         .requestMatchers("/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        
+                        // IA
                         .requestMatchers("/v1/ai/**").permitAll()
                         .requestMatchers("/api/v1/ai/**").permitAll()
-                        .requestMatchers("/v3/**", "/swagger-ui/**", "/actuator/**").permitAll()
+                        
+                        // Documentação e Actuator
+                        .requestMatchers("/v3/**", "/swagger-ui/**", "/swagger-ui.html", "/actuator/**").permitAll()
+                        
+                        // Endpoints públicos - GET para listagem e visualização
+                        .requestMatchers(HttpMethod.GET, "/api/camisas/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/planos/**").permitAll()
+                        
+                        // OPTIONS para CORS
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                        
+                        // Todos os outros endpoints requerem autenticação
                         .anyRequest()
                         .authenticated()
                 )

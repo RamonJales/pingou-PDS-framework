@@ -3,7 +3,7 @@ package com.pds.pingou.admin.mapper;
 import com.pds.pingou.admin.dto.UserRequestDTO;
 import com.pds.pingou.admin.dto.UserResponseDTO;
 import com.pds.pingou.admin.dto.UserUpdateDTO;
-import com.pds.pingou.assinatura.AssinaturaMapper;
+import com.pds.pingou.camisa.assinatura.dto.AssinaturaCamisaMapper;
 import com.pds.pingou.security.user.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -17,8 +17,8 @@ public class UserMapper {
         dto.setSobrenome(user.getSobrenome());
         dto.setRole(user.getRole());
         
-        if (user.getAssinatura() != null) {
-            dto.setAssinatura(AssinaturaMapper.toDTO(user.getAssinatura()));
+        if (user.getAssinaturaCamisa() != null) {
+            dto.setAssinaturaCamisa(AssinaturaCamisaMapper.toResponseDTO(user.getAssinaturaCamisa()));
         }
         
         return dto;

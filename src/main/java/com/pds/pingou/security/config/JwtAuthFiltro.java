@@ -39,7 +39,8 @@ public class JwtAuthFiltro extends OncePerRequestFilter {
         if (path.contains("/v1/auth") || 
             path.contains("/api/v1/auth") || 
             path.contains("/v1/ai") || 
-            path.contains("/api/v1/ai")) {
+            path.contains("/swagger-ui.html") ||
+            path.contains("/api/*")) {
             filterChain.doFilter(request, response);
             return;
         }

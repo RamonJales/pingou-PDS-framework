@@ -1,8 +1,8 @@
 package com.pds.pingou.security.user;
 
-import com.pds.pingou.assinatura.Assinatura;
-import com.pds.pingou.enums.StatusAssinatura;
-import com.pds.pingou.planos.Plano;
+import com.pds.pingou.camisa.assinatura.AssinaturaCamisa;
+import com.pds.pingou.camisa.planos.PlanoCamisa;
+import com.pds.pingou.framework.core.enums.SubscriptionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -42,7 +42,7 @@ public class User implements UserDetails {
     private UserRole role;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Assinatura assinatura;
+    private AssinaturaCamisa assinaturaCamisa;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -80,9 +80,11 @@ public class User implements UserDetails {
         return true;
     }
 
-    public Assinatura getAssinaturaAtiva(Plano plano) {
-        if (this.assinatura != null && this.assinatura.getStatus() == StatusAssinatura.ATIVA && this.assinatura.getPlano().equals(plano)) {
-            return this.assinatura;
+    public AssinaturaCamisa getAssinaturaAtiva(PlanoCamisa plano) {
+        if (this.assinaturaCamisa != null 
+            && this.assinaturaCamisa.getStatus() == SubscriptionStatus.ATIVA 
+            && this.assinaturaCamisa.getPlano().equals(plano)) {
+            return this.assinaturaCamisa;
         }
         return null;
     }
