@@ -4,6 +4,7 @@ import com.pds.pingou.framework.core.entity.BaseProduct;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import java.math.BigDecimal;
 
 /**
  * Classe abstrata que representa um produto genérico no sistema Pingou.
@@ -36,8 +37,8 @@ public abstract class Produto extends BaseProduct {
      * @param preco Preço do produto em reais
      */
     public Produto(String nome, String descricao, BigDecimal preco) {
-        this.nome = nome;
-        this.descricao = descricao;
-        this.preco = preco;
+        this.setNome(nome);
+        this.setDescricao(descricao);
+        this.setPreco(preco);
     }
 }
