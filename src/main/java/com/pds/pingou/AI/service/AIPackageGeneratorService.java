@@ -11,12 +11,21 @@ import com.pds.pingou.planos.PlanoRepository;
 import com.pds.pingou.planos.exception.PlanoNotFoundException;
 import com.pds.pingou.produto.Produto;
 import com.pds.pingou.produto.ProdutoRepository;
-import com.pds.pingou.produto.cachaca.Cachaca;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Serviço de geração automática de sugestões de pacotes.
+ * 
+ * Este serviço sugere combinações de produtos para pacotes de assinatura,
+ * evitando repetir combinações já usadas para o mesmo plano.
+ * 
+ * @author Pingou Framework Team
+ * @version 2.0
+ * @since 1.0
+ */
 @Service
 public class AIPackageGeneratorService {
 
@@ -32,6 +41,12 @@ public class AIPackageGeneratorService {
         this.produtoRepository = produtoRepository;
     }
 
+    /**
+     * Gera uma sugestão de pacote para o plano especificado.
+     * 
+     * @param req Requisição contendo planoId e tamanho opcional
+     * @return Sugestão de pacote com produtos selecionados
+     */
     public PackageSuggestionResponseDTO suggest(GeneratePackageRequestDTO req) {
         Long planoId = req.getPlanoId();
         Plano plano = planoRepository.findById(planoId)
@@ -42,13 +57,13 @@ public class AIPackageGeneratorService {
                 .map(v -> Math.min(v, Optional.ofNullable(plano.getMaxProdutosPorMes()).orElse(1)))
                 .orElse(Optional.ofNullable(plano.getMaxProdutosPorMes()).orElse(1));
 
-        // Lista de cachaças ativas (subtipo) ordenadas por id para estabilidade
-        List<Long> cachacasAtivas = produtoRepository.findByAtivoTrue().stream()
-                .filter(p -> p instanceof Cachaca)
+        // Lista de produtos ativos ordenados por id para estabilidade
+        List<Long> produtosAtivos = produtoRepository.findByAtivoTrue().stream()
                 .map(Produto::getId)
                 .sorted()
                 .collect(Collectors.toList());
-        if (cachacasAtivas.isEmpty()) {
+                
+        if (produtosAtivos.isEmpty()) {
             return new PackageSuggestionResponseDTO(planoId, limite, List.of());
         }
 
@@ -59,14 +74,14 @@ public class AIPackageGeneratorService {
                 .map(itens -> itens.stream()
                         .map(ItemPacote::getProduto)
                         .filter(Objects::nonNull)
-                        .map(p -> p.getId())
+                        .map(Produto::getId)
                         .sorted()
                         .map(String::valueOf)
                         .collect(Collectors.joining("-")))
                 .collect(Collectors.toSet());
 
         // Estratégia simples: usar um deslocamento baseado na quantidade de pacotes existentes
-        int n = cachacasAtivas.size();
+        int n = produtosAtivos.size();
         int offsetBase = Math.floorMod(combinacoesUsadas.size(), Math.max(1, n));
 
         // Tentar até n deslocamentos diferentes para evitar repetir combinações
@@ -74,7 +89,7 @@ public class AIPackageGeneratorService {
             int offset = (offsetBase + attempt) % n;
             List<Long> selecionados = new ArrayList<>(limite);
             for (int i = 0; i < n && selecionados.size() < limite; i++) {
-                Long id = cachacasAtivas.get((offset + i) % n);
+                Long id = produtosAtivos.get((offset + i) % n);
                 if (!selecionados.contains(id)) selecionados.add(id);
             }
 
@@ -95,7 +110,7 @@ public class AIPackageGeneratorService {
         }
 
         // Fallback: retornar a primeira combinação possível (mesmo que já usada)
-        List<ItemPacoteRequestDTO> itens = cachacasAtivas.stream()
+        List<ItemPacoteRequestDTO> itens = produtosAtivos.stream()
                 .limit(limite)
                 .map(id -> {
                     ItemPacoteRequestDTO dto = new ItemPacoteRequestDTO();

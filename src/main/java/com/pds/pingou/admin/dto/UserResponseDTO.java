@@ -1,7 +1,7 @@
 package com.pds.pingou.admin.dto;
 
 import com.pds.pingou.assinatura.AssinaturaResponseDTO;
-import com.pds.pingou.security.user.UserRole;
+import com.pds.pingou.framework.core.security.user.UserRole;
 import lombok.Data;
 
 @Data

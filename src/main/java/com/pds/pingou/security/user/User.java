@@ -2,86 +2,39 @@ package com.pds.pingou.security.user;
 
 import com.pds.pingou.assinatura.Assinatura;
 import com.pds.pingou.enums.StatusAssinatura;
+import com.pds.pingou.framework.core.security.user.BaseUser;
+import com.pds.pingou.framework.core.security.user.UserRole;
 import com.pds.pingou.planos.Plano;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
-
+/**
+ * Entidade de usuário específica da aplicação Pingou.
+ * 
+ * Estende BaseUser do framework e adiciona relacionamentos específicos
+ * do domínio, como assinatura.
+ */
 @Table(name = "users")
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@RequiredArgsConstructor
-public class User implements UserDetails {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @NonNull
-    private String email;
-
-    @NonNull
-    private String nome;
-
-    @NonNull
-    private String sobrenome;
-
-    @NonNull
-    private String password;
-
-    @Enumerated(EnumType.STRING)
-    @NonNull
-    private UserRole role;
+public class User extends BaseUser {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Assinatura assinatura;
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (this.role == UserRole.ADMIN) {
-            return List.of(
-                    new SimpleGrantedAuthority("ROLE_ADMIN"),
-                    new SimpleGrantedAuthority("ROLE_USER")
-            );
-        }
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+    public User(String email, String nome, String sobrenome, String password, UserRole role) {
+        super(email, nome, sobrenome, password, role);
     }
 
-    @Override
-    public String getUsername() {
-        return this.email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
-
+    /**
+     * Retorna a assinatura ativa do usuário para um determinado plano.
+     */
     public Assinatura getAssinaturaAtiva(Plano plano) {
-        if (this.assinatura != null && this.assinatura.getStatus() == StatusAssinatura.ATIVA && this.assinatura.getPlano().equals(plano)) {
+        if (this.assinatura != null && 
+            this.assinatura.getStatus() == StatusAssinatura.ATIVA && 
+            this.assinatura.getPlano().equals(plano)) {
             return this.assinatura;
         }
         return null;

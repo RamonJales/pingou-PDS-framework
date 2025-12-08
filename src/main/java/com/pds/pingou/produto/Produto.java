@@ -5,17 +5,21 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 /**
- * Classe abstrata que representa um produto genérico no sistema Pingou.
+ * Entidade que representa um produto genérico no sistema de assinatura.
  * 
- * Esta classe serve como base para todos os tipos de produtos que podem ser
- * incluídos nos pacotes de assinatura, como cachaças, whiskys, vodkas, etc.
- * Utiliza o padrão de herança JPA com estratégia JOINED para permitir
- * especialização de produtos mantendo a integridade relacional.
+ * Esta classe pode ser usada diretamente para produtos simples ou estendida
+ * para criar produtos especializados com atributos adicionais.
  * 
- * Agora estende BaseProduct do framework, reutilizando funcionalidades comuns.
+ * Exemplos de especialização:
+ * - Bebidas (cachaça, vinho, cerveja artesanal)
+ * - Alimentos (café, chocolate, queijos)
+ * - Cosméticos (produtos de beleza, perfumes)
+ * - Livros e revistas
  * 
- * @author Pingou Team
+ * @author Pingou Framework Team
  * @version 2.0
  * @since 1.0
  */
@@ -24,8 +28,28 @@ import lombok.Setter;
 @Table(name = "produtos")
 @Getter
 @Setter
-public abstract class Produto extends BaseProduct {
-    
+public class Produto extends BaseProduct {
+
+    /** Categoria do produto (ex: "Bebida", "Alimento", "Livro") */
+    @Column(name = "categoria")
+    private String categoria;
+
+    /** Marca ou fabricante do produto */
+    @Column(name = "marca")
+    private String marca;
+
+    /** Código SKU ou identificador único do produto */
+    @Column(name = "sku", unique = true)
+    private String sku;
+
+    /** Unidade de medida (ex: "ml", "g", "unidade") */
+    @Column(name = "unidade_medida")
+    private String unidadeMedida;
+
+    /** Quantidade na unidade de medida */
+    @Column(name = "quantidade_unidade")
+    private Integer quantidadeUnidade;
+
     public Produto() {}
     
     /**
@@ -36,8 +60,36 @@ public abstract class Produto extends BaseProduct {
      * @param preco Preço do produto em reais
      */
     public Produto(String nome, String descricao, BigDecimal preco) {
-        this.nome = nome;
-        this.descricao = descricao;
-        this.preco = preco;
+        setNome(nome);
+        setDescricao(descricao);
+        setPreco(preco);
+    }
+
+    /**
+     * Construtor completo para criação de um produto.
+     * 
+     * @param nome Nome comercial do produto
+     * @param descricao Descrição detalhada do produto
+     * @param preco Preço do produto em reais
+     * @param categoria Categoria do produto
+     * @param marca Marca ou fabricante
+     */
+    public Produto(String nome, String descricao, BigDecimal preco, String categoria, String marca) {
+        this(nome, descricao, preco);
+        this.categoria = categoria;
+        this.marca = marca;
+    }
+
+    @Override
+    public String getShortDescription() {
+        if (marca != null && !marca.isBlank()) {
+            return String.format("%s - %s", getNome(), marca);
+        }
+        return getNome();
+    }
+
+    @Override
+    public String getCategory() {
+        return categoria != null ? categoria : "Geral";
     }
 }

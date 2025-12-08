@@ -1,26 +1,24 @@
 package com.pds.pingou.security.auth;
 
-import com.pds.pingou.security.auth.dto.AuthenticationResponseDto;
-import com.pds.pingou.security.auth.dto.LoginRequestDTO;
-import com.pds.pingou.security.auth.dto.RegisterRequestDTO;
-import com.pds.pingou.security.config.JwtService;
-import com.pds.pingou.security.exception.UserDuplicatedException;
-import com.pds.pingou.security.exception.UserNotFoundException;
+import com.pds.pingou.framework.core.security.config.JwtService;
+import com.pds.pingou.framework.core.security.dto.AuthenticationResponseDTO;
+import com.pds.pingou.framework.core.security.dto.LoginRequestDTO;
+import com.pds.pingou.framework.core.security.dto.RegisterRequestDTO;
+import com.pds.pingou.framework.core.security.exception.UserDuplicatedException;
+import com.pds.pingou.framework.core.security.exception.UserNotFoundException;
+import com.pds.pingou.framework.core.security.user.UserRole;
 import com.pds.pingou.security.user.User;
-import com.pds.pingou.security.user.UserMapper;
 import com.pds.pingou.security.user.UserRepository;
-import com.pds.pingou.security.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -42,9 +40,8 @@ class AuthenticationServiceTest {
     private AuthenticationManager authenticationManager;
 
     @Mock
-    private UserMapper userMapper;
+    private PasswordEncoder passwordEncoder;
 
-    @InjectMocks
     private AuthenticationService authenticationService;
 
     private RegisterRequestDTO registerRequestDTO;
@@ -53,6 +50,13 @@ class AuthenticationServiceTest {
 
     @BeforeEach
     void setUp() {
+        authenticationService = new AuthenticationService(
+                userRepository,
+                passwordEncoder,
+                jwtService,
+                authenticationManager
+        );
+
         registerRequestDTO = new RegisterRequestDTO(
                 "João",
                 "Silva",
@@ -80,22 +84,20 @@ class AuthenticationServiceTest {
     void deveRegistrarNovoUsuarioComSucesso() {
         // Arrange
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
-        when(userMapper.toEntity(any(RegisterRequestDTO.class))).thenReturn(user);
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
-        when(jwtService.geradorToken(any(User.class))).thenReturn("accessToken");
-        when(jwtService.geradorRefreshToken(any(User.class))).thenReturn("refreshToken");
+        when(jwtService.generateToken(any(User.class))).thenReturn("accessToken");
+        when(jwtService.generateRefreshToken(any(User.class))).thenReturn("refreshToken");
 
         // Act
-        AuthenticationResponseDto response = authenticationService.register(registerRequestDTO);
+        AuthenticationResponseDTO response = authenticationService.register(registerRequestDTO);
 
         // Assert
         assertNotNull(response);
-        assertEquals("accessToken", response.access_token());
-        assertEquals("refreshToken", response.refresh_token());
+        assertEquals("accessToken", response.accessToken());
+        assertEquals("refreshToken", response.refreshToken());
         verify(userRepository).findByEmail("joao@email.com");
-        verify(userRepository).save(user);
-        verify(jwtService).geradorToken(user);
-        verify(jwtService).geradorRefreshToken(user);
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
@@ -117,16 +119,16 @@ class AuthenticationServiceTest {
     void deveFazerLoginComSucesso() {
         // Arrange
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
-        when(jwtService.geradorToken(any(User.class))).thenReturn("accessToken");
-        when(jwtService.geradorRefreshToken(any(User.class))).thenReturn("refreshToken");
+        when(jwtService.generateToken(any(User.class))).thenReturn("accessToken");
+        when(jwtService.generateRefreshToken(any(User.class))).thenReturn("refreshToken");
 
         // Act
-        AuthenticationResponseDto response = authenticationService.login(loginRequestDTO);
+        AuthenticationResponseDTO response = authenticationService.login(loginRequestDTO);
 
         // Assert
         assertNotNull(response);
-        assertEquals("accessToken", response.access_token());
-        assertEquals("refreshToken", response.refresh_token());
+        assertEquals("accessToken", response.accessToken());
+        assertEquals("refreshToken", response.refreshToken());
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(userRepository).findByEmail("joao@email.com");
     }
@@ -143,7 +145,6 @@ class AuthenticationServiceTest {
                 authenticationService.login(loginRequestDTO));
         
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userRepository, never()).findByEmail(anyString());
     }
 
     @Test

@@ -4,7 +4,7 @@ import com.pds.pingou.admin.dto.UserRequestDTO;
 import com.pds.pingou.admin.dto.UserResponseDTO;
 import com.pds.pingou.admin.dto.UserUpdateDTO;
 import com.pds.pingou.admin.service.AdminService;
-import com.pds.pingou.security.user.UserRole;
+import com.pds.pingou.framework.core.security.user.UserRole;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

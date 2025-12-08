@@ -1,47 +1,27 @@
 package com.pds.pingou.security.auth;
 
-
-import com.pds.pingou.security.auth.dto.AuthenticationResponseDto;
-import com.pds.pingou.security.auth.dto.LoginRequestDTO;
-import com.pds.pingou.security.auth.dto.RegisterRequestDTO;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import com.pds.pingou.framework.core.security.auth.BaseAuthenticationController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
-
+/**
+ * Controller de autenticação específico da aplicação Pingou.
+ * 
+ * Estende o controller base do framework e fornece os endpoints
+ * padrão de autenticação.
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
-public class AuthenticationController {
+public class AuthenticationController extends BaseAuthenticationController<AuthenticationService> {
 
-    private final AuthenticationService service;
-    public AuthenticationController(AuthenticationService service) {
-        this.service = service;
+    private final AuthenticationService authService;
+
+    public AuthenticationController(AuthenticationService authService) {
+        this.authService = authService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponseDto> register(
-            @RequestBody @Valid RegisterRequestDTO request) {
-        return ResponseEntity.ok(service.register(request));
+    @Override
+    protected AuthenticationService getAuthService() {
+        return authService;
     }
-
-    @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponseDto> login(
-            @RequestBody @Valid LoginRequestDTO request) {
-        return ResponseEntity.ok(service.login(request));
-    }
-
-
-    @PostMapping("/refresh-token")
-    public void refreshToken(
-            HttpServletRequest request,
-            HttpServletResponse response) throws IOException {
-        service.refreshToken(request, response);
-    }
-
 }

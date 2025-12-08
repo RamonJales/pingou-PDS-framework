@@ -1,7 +1,6 @@
 package com.pds.pingou.pacote;
 
 import com.pds.pingou.planos.Plano;
-import com.pds.pingou.produto.Produto;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
