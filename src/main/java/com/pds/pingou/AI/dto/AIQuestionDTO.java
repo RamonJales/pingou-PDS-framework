@@ -14,6 +14,11 @@ public class AIQuestionDTO {
     @Size(min = 3, max = 1000, message = "A pergunta deve ter entre 3 e 1000 caracteres")
     private String question;
     
-    private String contextType = "pingou";
+    /**
+     * Tipo de contexto para seleção do prompt provider.
+     * Valores válidos: "futebol", "camisa10", "pingou", "cachaca"
+     * Default: "futebol" para o módulo de camisas de futebol
+     */
+    private String contextType = "futebol";
 }
 

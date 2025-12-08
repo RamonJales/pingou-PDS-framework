@@ -68,8 +68,9 @@ public class AIService {
             }
             
             // Obter o provedor de prompts apropriado via Factory
+            // Default é "futebol" para o módulo de camisas de futebol
             AIPromptProvider promptProvider = promptProviderFactory.createProvider(
-                questionDTO.getContextType() != null ? questionDTO.getContextType() : "pingou"
+                questionDTO.getContextType() != null ? questionDTO.getContextType() : "futebol"
             );
             
             // Construir o prompt completo
