@@ -78,9 +78,14 @@ public class ExemploUser extends BaseUser {
 
     // ===== Relacionamentos =====
 
-    /** Exemplo de relacionamento com Assinatura */
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Assinatura assinatura;
+    /**
+     * NOTA: Se você precisar de uma relação com Assinatura, 
+     * crie sua própria classe de Assinatura que referencie ExemploUser.
+     * 
+     * Exemplo:
+     * @OneToOne(mappedBy = "exemploUser", cascade = CascadeType.ALL, orphanRemoval = true)
+     * private MinhaAssinatura assinatura;
+     */
 
     /**
      * Construtor com campos obrigatórios.
