@@ -29,7 +29,7 @@ import java.util.List;
 @Entity
 @Table(name = "planos")
 public class Plano extends BasePlan<Pacote> {
-    
+
     /** Lista de pacotes mensais associados a este plano */
     @OneToMany(mappedBy = "plano", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Pacote> pacotes = new ArrayList<>();
@@ -40,9 +40,9 @@ public class Plano extends BasePlan<Pacote> {
     /**
      * Construtor para criação de um plano com informações essenciais.
      * 
-     * @param nome Nome comercial do plano
-     * @param descricao Descrição detalhada do plano
-     * @param preco Preço mensal em reais
+     * @param nome              Nome comercial do plano
+     * @param descricao         Descrição detalhada do plano
+     * @param preco             Preço mensal em reais
      * @param maxProdutosPorMes Quantidade máxima de produtos por mês
      */
     public Plano(String nome, String descricao, BigDecimal preco, Integer maxProdutosPorMes) {
@@ -51,7 +51,7 @@ public class Plano extends BasePlan<Pacote> {
         this.setPreco(preco);
         this.setMaxProdutosPorPeriodo(maxProdutosPorMes);
     }
-    
+
     /**
      * Implementação do método abstrato do framework.
      */
@@ -59,7 +59,7 @@ public class Plano extends BasePlan<Pacote> {
     public List<Pacote> getPackages() {
         return pacotes;
     }
-    
+
     /**
      * Implementação do método abstrato do framework.
      */
@@ -67,7 +67,7 @@ public class Plano extends BasePlan<Pacote> {
     public void setPackages(List<Pacote> packages) {
         this.pacotes = packages;
     }
-    
+
     /**
      * Adiciona um pacote mensal a este plano.
      * 
@@ -77,7 +77,7 @@ public class Plano extends BasePlan<Pacote> {
         addPackage(pacote);
         pacote.setPlano(this);
     }
-    
+
     /**
      * Remove um pacote mensal deste plano.
      * 
@@ -87,13 +87,18 @@ public class Plano extends BasePlan<Pacote> {
         removePackage(pacote);
         pacote.setPlano(null);
     }
-    
+
     // Compatibilidade com código legado
     public Integer getMaxProdutosPorMes() {
         return getMaxProdutosPorPeriodo();
     }
-    
+
     public void setMaxProdutosPorMes(Integer max) {
         setMaxProdutosPorPeriodo(max);
     }
+
+    /** Tipo do plano, define a estratégia de negócio e curadoria */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_plano")
+    private com.pds.pingou.enums.TipoPlano tipo = com.pds.pingou.enums.TipoPlano.GENERICO;
 }

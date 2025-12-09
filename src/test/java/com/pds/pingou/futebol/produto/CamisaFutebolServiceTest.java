@@ -1,6 +1,5 @@
 package com.pds.pingou.futebol.produto;
 
-import com.pds.pingou.futebol.enums.Competicao;
 import com.pds.pingou.futebol.enums.TipoCamisa;
 import com.pds.pingou.futebol.produto.dto.CamisaFutebolRequestDTO;
 import com.pds.pingou.futebol.produto.dto.CamisaFutebolResponseDTO;

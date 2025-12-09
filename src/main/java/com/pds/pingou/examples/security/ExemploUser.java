@@ -1,6 +1,5 @@
 package com.pds.pingou.examples.security;
 
-import com.pds.pingou.assinatura.Assinatura;
 import com.pds.pingou.framework.core.security.user.BaseUser;
 import com.pds.pingou.framework.core.security.user.UserRole;
 import jakarta.persistence.*;

@@ -33,12 +33,17 @@ public class AIPackageGeneratorService {
     private final PacoteRepository pacoteRepository;
     private final ProdutoRepository produtoRepository;
 
+    // Mapa de estratégias injetado pelo Spring: BeanName ("FUTEBOL") -> Instância
+    private final Map<String, com.pds.pingou.AI.service.strategy.CurationStrategy> strategies;
+
     public AIPackageGeneratorService(PlanoRepository planoRepository,
-                                     PacoteRepository pacoteRepository,
-                                     ProdutoRepository produtoRepository) {
+            PacoteRepository pacoteRepository,
+            ProdutoRepository produtoRepository,
+            Map<String, com.pds.pingou.AI.service.strategy.CurationStrategy> strategies) {
         this.planoRepository = planoRepository;
         this.pacoteRepository = pacoteRepository;
         this.produtoRepository = produtoRepository;
+        this.strategies = strategies;
     }
 
     /**
@@ -57,12 +62,38 @@ public class AIPackageGeneratorService {
                 .map(v -> Math.min(v, Optional.ofNullable(plano.getMaxProdutosPorMes()).orElse(1)))
                 .orElse(Optional.ofNullable(plano.getMaxProdutosPorMes()).orElse(1));
 
+        // Tenta encontrar uma estratégia específica para o tipo do plano
+        String tipoPlano = plano.getTipo().name();
+        if (strategies.containsKey(tipoPlano)) {
+            // Se o request tiver userId, precisaríamos buscar o User completo.
+            // COMO O DTO NÃO TEM USER ID, VAMOS ASSUMIR UM MOCK OU RECUPERAR DO CONTEXTO DE
+            // SEGURANÇA
+            // Para este exercício, vamos simular que o usuário vem de algum lugar ou passar
+            // null
+            // e a estratégia lida com isso.
+
+            // TODO: Em produção, recuperar User do SecurityContext ou adicionar userId no
+            // DTO
+            com.pds.pingou.security.user.User currentUser = null;
+            // Mock temporário para demonstrar a chamada (API Limitation: User not in DTO)
+
+            List<ItemPacoteRequestDTO> itens = strategies.get(tipoPlano)
+                    .suggestPackageItems(currentUser, plano, limite);
+
+            return new PackageSuggestionResponseDTO(planoId, limite, itens);
+        }
+
+        // --- LÓGICA PADRÃO (FALLBACK) ---
+        return executeDefaultStrategy(planoId, limite, plano);
+    }
+
+    private PackageSuggestionResponseDTO executeDefaultStrategy(Long planoId, int limite, Plano plano) {
         // Lista de produtos ativos ordenados por id para estabilidade
         List<Long> produtosAtivos = produtoRepository.findByAtivoTrue().stream()
                 .map(Produto::getId)
                 .sorted()
                 .collect(Collectors.toList());
-                
+
         if (produtosAtivos.isEmpty()) {
             return new PackageSuggestionResponseDTO(planoId, limite, List.of());
         }
@@ -80,7 +111,8 @@ public class AIPackageGeneratorService {
                         .collect(Collectors.joining("-")))
                 .collect(Collectors.toSet());
 
-        // Estratégia simples: usar um deslocamento baseado na quantidade de pacotes existentes
+        // Estratégia simples: usar um deslocamento baseado na quantidade de pacotes
+        // existentes
         int n = produtosAtivos.size();
         int offsetBase = Math.floorMod(combinacoesUsadas.size(), Math.max(1, n));
 
@@ -90,7 +122,8 @@ public class AIPackageGeneratorService {
             List<Long> selecionados = new ArrayList<>(limite);
             for (int i = 0; i < n && selecionados.size() < limite; i++) {
                 Long id = produtosAtivos.get((offset + i) % n);
-                if (!selecionados.contains(id)) selecionados.add(id);
+                if (!selecionados.contains(id))
+                    selecionados.add(id);
             }
 
             List<Long> ordenados = selecionados.stream().sorted().toList();
@@ -124,5 +157,3 @@ public class AIPackageGeneratorService {
         return new PackageSuggestionResponseDTO(planoId, limite, itens);
     }
 }
-
-

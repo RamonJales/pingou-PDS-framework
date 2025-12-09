@@ -32,11 +32,28 @@ public class User extends BaseUser {
      * Retorna a assinatura ativa do usuário para um determinado plano.
      */
     public Assinatura getAssinaturaAtiva(Plano plano) {
-        if (this.assinatura != null && 
-            this.assinatura.getStatus() == StatusAssinatura.ATIVA && 
-            this.assinatura.getPlano().equals(plano)) {
+        if (this.assinatura != null &&
+                this.assinatura.getStatus() == StatusAssinatura.ATIVA &&
+                this.assinatura.getPlano().equals(plano)) {
             return this.assinatura;
         }
         return null;
+    }
+
+    /**
+     * Perfis especializados por tipo de plano (ex: perfil de torcedor para
+     * FUTEBOL).
+     * Nota: Em produção, mapear como JSONB ou tabela separada.
+     */
+    @Transient // Simplificação para este exercício
+    private java.util.Map<com.pds.pingou.enums.TipoPlano, com.pds.pingou.security.user.profile.UserProfileStrategy> profiles = new java.util.HashMap<>();
+
+    public void addProfile(com.pds.pingou.enums.TipoPlano tipo,
+            com.pds.pingou.security.user.profile.UserProfileStrategy profile) {
+        this.profiles.put(tipo, profile);
+    }
+
+    public com.pds.pingou.security.user.profile.UserProfileStrategy getProfile(com.pds.pingou.enums.TipoPlano tipo) {
+        return this.profiles.get(tipo);
     }
 }

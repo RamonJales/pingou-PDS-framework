@@ -1,6 +1,5 @@
 package com.pds.pingou.futebol.pacote;
 
-import com.pds.pingou.enums.StatusAssinatura;
 import com.pds.pingou.futebol.assinatura.AssinaturaFutebol;
 import com.pds.pingou.futebol.assinatura.AssinaturaFutebolRepository;
 import com.pds.pingou.futebol.assinatura.MembroAssinatura;

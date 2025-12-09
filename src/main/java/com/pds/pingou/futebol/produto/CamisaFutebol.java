@@ -1,8 +1,8 @@
 package com.pds.pingou.futebol.produto;
 
-import com.pds.pingou.framework.core.entity.BaseProduct;
 import com.pds.pingou.futebol.enums.Competicao;
 import com.pds.pingou.futebol.enums.TipoCamisa;
+import com.pds.pingou.produto.Produto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 /**
  * Entidade que representa uma camisa de futebol no sistema de assinatura.
  * 
- * Estende BaseProduct do framework para herdar funcionalidades comuns de produtos,
+ * Estende Produto do framework para herdar funcionalidades comuns de produtos,
  * adicionando atributos específicos para camisas de futebol como time, temporada,
  * tipo de camisa (casa/fora/goleiro), número, nome do jogador, etc.
  * 
@@ -26,7 +26,7 @@ import java.math.BigDecimal;
 @Table(name = "camisas_futebol")
 @Getter
 @Setter
-public class CamisaFutebol extends BaseProduct {
+public class CamisaFutebol extends Produto {
 
     /** Nome do time/seleção (ex: "Flamengo", "Brasil", "Barcelona") */
     @Column(name = "time", nullable = false)
@@ -49,10 +49,6 @@ public class CamisaFutebol extends BaseProduct {
     @Enumerated(EnumType.STRING)
     @Column(name = "competicao")
     private Competicao competicao;
-
-    /** Marca/fabricante (Nike, Adidas, Puma, etc.) */
-    @Column(name = "marca", nullable = false)
-    private String marca;
 
     /** Número do jogador (opcional - null para camisa sem número) */
     @Column(name = "numero_jogador")
@@ -93,13 +89,12 @@ public class CamisaFutebol extends BaseProduct {
      */
     public CamisaFutebol(String nome, String descricao, BigDecimal preco, 
                          String time, String temporada, TipoCamisa tipoCamisa, String marca) {
-        setNome(nome);
-        setDescricao(descricao);
-        setPreco(preco);
+        super(nome, descricao, preco);
         this.time = time;
         this.temporada = temporada;
         this.tipoCamisa = tipoCamisa;
-        this.marca = marca;
+        setMarca(marca);
+        setCategoria("CAMISA_FUTEBOL");
     }
 
     @Override
@@ -156,7 +151,7 @@ public class CamisaFutebol extends BaseProduct {
         sb.append("Camisa ").append(time);
         sb.append(" - ").append(tipoCamisa.getNome());
         sb.append(" | Temporada ").append(temporada);
-        sb.append(" | Marca: ").append(marca);
+        sb.append(" | Marca: ").append(getMarca());
         if (versaoJogador) {
             sb.append(" | Versão Jogador");
         }
