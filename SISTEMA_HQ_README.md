@@ -2,6 +2,229 @@
 
 Sistema completo de assinatura de quadrinhos desenvolvido usando o **Pingou Framework**, com curadoria personalizada, sistema de gamificação por pontos e quiz de onboarding.
 
+## 🔧 Pontos Flexíveis do Framework
+
+O sistema de HQs implementa os **4 pontos de variação** do Pingou Framework através de extensão e customização:
+
+### 1️⃣ **Especialização do Domínio do Produto**
+
+**Framework Base (Frozen Spot):**
+```java
+// BaseProduct.java - Define o que DEVE ser implementado
+public abstract String getShortDescription();
+public abstract String getCategory();
+```
+
+**Implementação HQ (Hot Spot):**
+```java
+// Quadrinho.java - Customização para HQs
+@Entity
+@Table(name = "quadrinhos")
+public class Quadrinho extends BaseProduct {
+    private EditoraHQ editora;           // Marvel, DC, Image, etc.
+    private TipoHQ tipoHQ;               // Clássica (100pts) ou Moderna (50pts)
+    private CategoriaHQ categoria;       // Super-Herói, Manga, etc.
+    private Integer pontosGanho;         // Calculado automaticamente
+    private Boolean edicaoColecionador;  // Vale dobro de pontos
+    
+    @Override
+    public String getShortDescription() {
+        return String.format("%s #%d - %s (%s)", 
+            tituloSerie, numeroEdicao, editora.getDescricao(), tipoHQ);
+    }
+    
+    @Override
+    public String getCategory() {
+        return categoria.name();
+    }
+}
+```
+
+**Enums Específicos:**
+- `EditoraHQ`: Marvel, DC, Image, Dark Horse, IDW, Boom, Vertigo, Outros
+- `TipoHQ`: CLASSICA (100 pontos), MODERNA (50 pontos)
+- `CategoriaHQ`: 10 categorias (Super-Herói, Manga, Independente, etc.)
+
+---
+
+### 2️⃣ **Mecanismo de Curadoria e Montagem de Pacotes**
+
+**Framework Base (Frozen Spot):**
+```java
+// BasePackageService.java - Estrutura genérica
+public abstract PKG createPackage(...);
+```
+
+**Implementação HQ (Hot Spot):**
+```java
+// CuradoriaService.java - Algoritmo 100% customizado
+public PacoteHQ curarPacotePersonalizado(Long usuarioId, Long planoId, LocalDate dataEntrega) {
+    // 1. Buscar preferências do usuário (quiz)
+    PreferenciaUsuario prefs = preferenciaRepository.findByUserId(usuarioId);
+    
+    // 2. Buscar histórico de HQs já recebidas
+    List<Long> hqsRecebidas = historicoRepository.findQuadrinhosIdsRecebidosPorUser(usuarioId);
+    
+    // 3. Calcular quantidades baseado no plano
+    int qtdClassicas = plano.calcularQuantidadeClassicas();
+    int qtdModernas = plano.calcularQuantidadeModernas();
+    
+    // 4. Selecionar HQs que correspondem às preferências
+    List<Quadrinho> classicas = selecionarPorPreferencias(
+        TipoHQ.CLASSICA, prefs, hqsRecebidas, qtdClassicas
+    );
+    
+    // 5. Excluir duplicatas (HQs já recebidas anteriormente)
+    classicas = classicas.stream()
+        .filter(hq -> !hqsRecebidas.contains(hq.getId()))
+        .collect(Collectors.toList());
+    
+    // 6. Priorizar edições de colecionador (se aplicável no plano)
+    if (plano.getIncluiEdicoesColecionador()) {
+        priorizarEdicoesColecionador(classicas);
+    }
+    
+    // 7. Registrar no histórico para evitar duplicatas futuras
+    registrarRecebimento(usuarioId, hqsSelecionadas);
+    
+    return pacote;
+}
+```
+
+**Entidade de Anti-Duplicatas:**
+```java
+// HistoricoHQUsuario.java - Previne envio de HQs repetidas
+@Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "quadrinho_id"}))
+public class HistoricoHQUsuario {
+    private User user;
+    private Quadrinho quadrinho;
+    private LocalDate dataRecebimento;
+}
+```
+
+---
+
+### 3️⃣ **Regras de Cadastro/Onboarding de Usuários**
+
+**Framework Base (Frozen Spot):**
+```java
+// Não há regras fixas de onboarding no framework base
+// Cada domínio define seu próprio processo
+```
+
+**Implementação HQ (Hot Spot):**
+```java
+// PreferenciaUsuario.java - Entidade customizada
+@Entity
+@Table(name = "preferencias_usuario")
+public class PreferenciaUsuario {
+    @ElementCollection
+    private Set<CategoriaHQ> categoriasFavoritas;  // Super-Herói, Manga, etc.
+    
+    @ElementCollection
+    private Set<EditoraHQ> editorasFavoritas;      // Marvel, DC, etc.
+    
+    private Boolean prefereClassicas;               // Prefere clássicas?
+    private Boolean prefereModernas;                // Prefere modernas?
+    private Boolean interesseEdicoesColecionador;   // Interesse em colecionador?
+    private Boolean quizCompleto;                   // Quiz foi completado?
+    
+    // Método usado pela curadoria
+    public boolean correspondePreferencias(Quadrinho quadrinho) {
+        boolean categoriaCorresponde = categoriasFavoritas.isEmpty() || 
+            categoriasFavoritas.contains(quadrinho.getCategoria());
+        boolean editoraCorresponde = editorasFavoritas.isEmpty() || 
+            editorasFavoritas.contains(quadrinho.getEditora());
+        return categoriaCorresponde && editoraCorresponde;
+    }
+}
+```
+
+**Controller de Quiz:**
+```java
+// PreferenciaController.java
+@PostMapping("/quiz")
+public ResponseEntity<String> completarQuiz(@RequestBody QuizPreferenciasDTO dto) {
+    // Persiste preferências coletadas no onboarding
+    preferenciaService.salvarPreferencias(dto);
+    return ResponseEntity.ok("Quiz completado! Suas preferências foram salvas.");
+}
+```
+
+---
+
+### 4️⃣ **Estrutura e Composição do Plano**
+
+**Framework Base (Frozen Spot):**
+```java
+// BasePlan.java - Estrutura genérica
+public abstract class BasePlan<PKG> {
+    private String nome;
+    private BigDecimal preco;
+    private Integer maxProdutosPorPeriodo;
+    
+    public abstract List<PKG> getPackages();
+}
+```
+
+**Implementação HQ (Hot Spot):**
+```java
+// PlanoHQ.java - Filosofia de curadoria customizada
+@Entity
+@Table(name = "planos_hq")
+public class PlanoHQ extends BasePlan<PacoteHQ> {
+    private Integer percentualClassicas;           // Ex: 70%
+    private Integer percentualModernas;            // Ex: 30%
+    private Integer pontosBonusMensal;             // Bônus de gamificação
+    private Boolean incluiEdicoesColecionador;     // Inclui edições especiais?
+    private String nivelCuradoria;                 // BASICO, INTERMEDIARIO, PREMIUM
+    
+    // Validação customizada: percentuais devem somar 100%
+    @PrePersist
+    @PreUpdate
+    public void validatePercentuais() {
+        if (percentualClassicas + percentualModernas != 100) {
+            throw new IllegalArgumentException(
+                "Percentuais de clássicas e modernas devem somar 100%"
+            );
+        }
+    }
+    
+    // Cálculo customizado de quantidades
+    public Integer calcularQuantidadeClassicas() {
+        return (getMaxProdutosPorPeriodo() * percentualClassicas) / 100;
+    }
+    
+    public Integer calcularQuantidadeModernas() {
+        return (getMaxProdutosPorPeriodo() * percentualModernas) / 100;
+    }
+}
+```
+
+**Exemplos de Planos:**
+| Plano          | Preço    | HQs/Mês | Clássicas | Modernas | Colecionador | Pontos Bônus |
+|----------------|----------|---------|-----------|----------|--------------|--------------|
+| Explorador     | R$ 79,90 | 3       | 33%       | 67%      | Não          | 50           |
+| Colecionador   | R$ 129,90| 5       | 60%       | 40%      | Sim          | 100          |
+| Clássico Puro  | R$ 149,90| 4       | 100%      | 0%       | Sim          | 150          |
+| Balanceado     | R$ 109,90| 4       | 50%       | 50%      | Não          | 75           |
+| Moderno Plus   | R$ 99,90 | 5       | 20%       | 80%      | Não          | 60           |
+
+---
+
+## 📊 Resumo: Framework vs Implementação
+
+| Aspecto                | Framework (Frozen)              | Implementação HQ (Hot Spot)           |
+|------------------------|---------------------------------|---------------------------------------|
+| **Produto**            | `BaseProduct` (abstrato)        | `Quadrinho` + enums específicos       |
+| **Curadoria**          | `BasePackageService` (genérico) | `CuradoriaService` (algoritmo custom) |
+| **Onboarding**         | Não definido                    | `PreferenciaUsuario` + Quiz           |
+| **Plano**              | `BasePlan` (estrutura básica)   | `PlanoHQ` (percentuais + validações)  |
+| **Reutilização**       | ~75% do código                  | ~25% código customizado               |
+
+---
+
 ## 🎯 Funcionalidades Principais
 
 ### 1. **Especialização do Domínio do Produto (HQs)**
